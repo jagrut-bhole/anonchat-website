@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  emailVerified   Boolean  @default(false)
+  image           String?
+  username        String?  @unique
+  displayUsername String?
+
+  // Account security fields
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+
+  //users location
+  latitude     Float?
+  longitude    Float?
+  lastLocation DateTime?
+  isOnline     Boolean   @default(false)
+  location     String? // Text location based on geocoding
+  selectedDistance Int @default(25)
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groupMemberships    GroupMember[]
+  groupMessages       GroupMessage[]
+  privateChatsAsUser1 PrivateChat[]    @relation("User1Chats")
+  privateChatsAsUser2 PrivateChat[]    @relation("User2Chats")
+  privateMessages     PrivateMessage[]
+
+  // Better Auth variables
+  accounts Account[]
+  sessions Session[]
+
+  @@map("user")
+}
+
+model Group {
+  id          String @id @default(uuid())
+  name        String
+  description String
+
+  // Location
+  latitude      Float?
+  longitude     Float?
+  radius        Float?
+  maxMembers    Int?
+  expiresAt     DateTime?
+  createdAt     DateTime       @default(now())
+  groupMembers  GroupMember[]
+  groupMessages GroupMessage[]
+
+  @@index([latitude, longitude])
+  @@index([expiresAt])
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String   @id @default(uuid())
+  userId   String
+  groupId  String
+  joinedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([groupId])
+
+  @@map("group_members")
+}
+
+model GroupMessage {
+  id        String   @id @default(uuid())
+  groupId   String
+  userId    String
+  content   String?
+  mediaUrl  String?
+  mediaType String?
+  createdAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+
+  @@map("group_messages")
+}
+
+model PrivateChat {
+  id        String    @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  status    String    @default("active") // active, ended
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  user1    User             @relation("User1Chats", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User             @relation("User2Chats", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages PrivateMessage[]
+
+  @@index([user1Id, user2Id])
+  @@index([status])
+
+  @@map("private_chats")
+}
+
+model PrivateMessage {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  content   String?
+  mediaUrl  String?
+  mediaType String?
+  createdAt DateTime @default(now())
+
+  chat   PrivateChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
+  @@map("private_messages")
+}
+
+// better auth configuration
+
+model Account {
+  id     String @id @default(cuid())
+  userId String
+
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}

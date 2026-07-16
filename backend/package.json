@@ -1,0 +1,46 @@
+{
+  "name": "@anonchat/backend",
+  "version": "1.0.0",
+  "description": "AnonChat Backend with fastify",
+  "main": "src/app.ts",
+  "scripts": {
+    "dev": "bun --hot run src/app.ts",
+    "start": "bun dist/index.js",
+    "build": "bunx esbuild src/app.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist/index.js",
+    "lint": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev"
+  },
+  "keywords": [
+    "fastify",
+    "chat-app"
+  ],
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
+  },
+  "author": "Jagrut Bhole",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@types/node": "^25.9.3",
+    "@types/ws": "^8.18.1",
+    "better-auth": "^1.6.18",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.8.5",
+    "hono": "^4.12.25",
+    "ioredis": "^5.11.1",
+    "nodemailer": "^7.0.11",
+    "opencage-api-client": "^2.1.2",
+    "pg": "^8.21.0",
+    "typescript": "^6.0.3",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^7.0.4",
+    "@types/pg": "^8.20.0",
+    "prisma": "^7.8.0",
+    "tsx": "^4.22.4"
+  }
+}
