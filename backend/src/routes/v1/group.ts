@@ -34,7 +34,11 @@ export async function groupRoutes(app: FastifyInstance) {
     getJoinedGroups
   );
 
-  app.get(
+  app.get<{
+    Params: {
+      groupId: string
+    }
+  }>(
     "/members/:groupId",
     {
       preHandler: authenticate
@@ -42,7 +46,11 @@ export async function groupRoutes(app: FastifyInstance) {
     getGroupMembers
   );
 
-  app.post(
+  app.post<{
+    Params: {
+      groupId: string
+    }
+  }>(
     "/join/:groupId",
     {
       preHandler: authenticate
@@ -50,7 +58,11 @@ export async function groupRoutes(app: FastifyInstance) {
     joiningGroup
   );
 
-  app.post(
+  app.post<{
+    Params: {
+      groupId: string
+    }
+  }>(
     "/leave/:groupId",
     {
       preHandler: authenticate

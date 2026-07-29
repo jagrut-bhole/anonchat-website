@@ -3,8 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { responseHandler } from "@/utils/apiResponse";
 import { otherUser } from "@/types/user.type";
 
-const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
-
 function publicUser(user: {
   id: string;
   name: string;
@@ -172,7 +170,11 @@ export async function getUserProfile(
 }
 
 export async function getOtherUserProfile(
-  request: FastifyRequest,
+  request: FastifyRequest<{
+    Params: {
+      userId: string
+    }
+  }>,
   reply: FastifyReply,
 ) {
   try {
@@ -182,7 +184,7 @@ export async function getOtherUserProfile(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request.body;
+    const body = request.params;
 
     const validation = otherUser.safeParse(body);
 
@@ -195,11 +197,11 @@ export async function getOtherUserProfile(
       );
     }
 
-    const { otherUserId } = validation.data;
+    const { userId } = validation.data;
 
     const user = await prisma.user.findUnique({
       where: {
-        id: otherUserId,
+        id: userId,
       },
       select: {
         id: true,
@@ -226,7 +228,7 @@ export async function getOtherUserProfile(
           {
             groupMembers: {
               some: {
-                userId: otherUserId,
+                userId: userId,
               },
             },
           },
@@ -259,3 +261,4 @@ export async function getOtherUserProfile(
     );
   }
 }
+

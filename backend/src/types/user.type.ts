@@ -11,5 +11,5 @@ export const getUser = z.object({
 })
 
 export const otherUser = z.object({
-  otherUserId: z.string()
+  userId: z.string()
 })

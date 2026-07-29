@@ -70,7 +70,11 @@ export async function createGroup(
 }
 
 export async function getGroupMembers(
-  request: FastifyRequest,
+  request: FastifyRequest<{
+    Params: {
+      groupId: string
+    }
+  }>,
   reply: FastifyReply,
 ) {
   try {
@@ -80,7 +84,7 @@ export async function getGroupMembers(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request.body;
+    const body = request.params;
 
     const validation = getGroupMemberRequest.safeParse(body);
 
@@ -304,7 +308,11 @@ export async function getJoinedGroups(
 }
 
 export async function joiningGroup(
-  request: FastifyRequest,
+  request: FastifyRequest<{
+    Params: {
+      groupId: string
+    }
+  }>,
   reply: FastifyReply,
 ) {
   try {
@@ -314,7 +322,7 @@ export async function joiningGroup(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request.body;
+    const body = request.params;
     
     const validation = getGroupMemberRequest.safeParse(body);
 

@@ -32,7 +32,11 @@ export async function userRoutes(app: FastifyInstance) {
     getUserProfile,
   );
 
-  app.get(
+  app.get<{
+    Params: {
+      userId: string;
+    };
+  }>(
     "/profile/:userId",
     {
       preHandler: authenticate,

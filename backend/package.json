@@ -27,6 +27,7 @@
     "@types/node": "^25.9.3",
     "@types/ws": "^8.18.1",
     "better-auth": "^1.6.18",
+    "cloudinary": "^2.10.0",
     "dotenv": "^17.4.2",
     "fastify": "^5.8.5",
     "hono": "^4.12.25",
@@ -34,13 +35,15 @@
     "nodemailer": "^7.0.11",
     "opencage-api-client": "^2.1.2",
     "pg": "^8.21.0",
-    "typescript": "^6.0.3",
-    "ws": "^8.21.0"
+    "ws": "^8.21.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/nodemailer": "^7.0.4",
     "@types/pg": "^8.20.0",
     "prisma": "^7.8.0",
-    "tsx": "^4.22.4"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^7.0.2"
   }
 }
