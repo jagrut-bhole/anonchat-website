@@ -12,7 +12,13 @@ model User {
   username        String  @unique
   email           String   @unique
   emailVerified   Boolean  @default(false)
-  image           String?
+
+  // Avatar fields
+  avatarStyle     AvatarStyle
+  avatarSeed      String
+  avatarBackgroundColor String
+  avatarVersion         String @default("10.x")
+
 
   // Account security fields
   failedLoginAttempts Int       @default(0)
@@ -29,6 +35,9 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Avatar history
+  avatarHistory AvatarHistory[]
 
   groupMemberships    GroupMember[]
   groupMessages       GroupMessage[]
@@ -173,4 +182,29 @@ model Session {
 
   @@index([userId])
   @@map("session")
+}
+
+model AvatarHistory {
+  id        String   @id @default(cuid())
+
+  userId    String
+
+  style              AvatarStyle
+  seed               String
+  backgroundColor    String
+  version            String
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum AvatarStyle {
+  TOON_HEAD
+  NOTIONISTS_NEUTRAL
+  PERSONAS
+  ADVENTURER_NEUTRAL
+  THUMBS
 }
