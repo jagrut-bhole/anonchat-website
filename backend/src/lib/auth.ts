@@ -48,9 +48,6 @@ export const auth = betterAuth({
       sendVerificationOnSignUp: true,
       overrideDefaultEmailVerification: true,
       async sendVerificationOTP({ email, otp, type }) {
-        console.log("\n==========================================");
-        console.log(`🔑 [DEV OTP CODE] ${email} (${type}): ${otp}`);
-        console.log("==========================================\n");
 
         try {
           const template = getAuthEmailTemplate(type, otp);

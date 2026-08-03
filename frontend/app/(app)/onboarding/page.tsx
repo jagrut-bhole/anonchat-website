@@ -159,7 +159,12 @@ export default function OnboardingPage() {
       setUsernameStatus(USERNAME_STATUS.CHECKING);
       const result = await checkUsernameAvailability(lowered);
       if (result.error) {
-        setUsernameStatus(USERNAME_STATUS.TAKEN);
+        if (result.error.toLowerCase().includes("taken")) {
+          setUsernameStatus(USERNAME_STATUS.TAKEN);
+        } else {
+          toast.error(result.error);
+          setUsernameStatus(USERNAME_STATUS.IDLE);
+        }
       } else {
         setUsernameStatus(USERNAME_STATUS.AVAILABLE);
       }
@@ -580,9 +585,10 @@ export default function OnboardingPage() {
                         <X className="size-4 text-red-400" />
                       </motion.div>
                     )}
-                    {usernameStatus === USERNAME_STATUS.INVALID && username.length > 0 && (
-                      <X className="size-4 text-amber-400" />
-                    )}
+                    {usernameStatus === USERNAME_STATUS.INVALID &&
+                      username.length > 0 && (
+                        <X className="size-4 text-amber-400" />
+                      )}
                   </div>
                 </div>
 
@@ -610,19 +616,20 @@ export default function OnboardingPage() {
                       Username is already taken
                     </motion.p>
                   )}
-                  {usernameStatus === USERNAME_STATUS.INVALID && username.length > 0 && (
-                    <motion.p
-                      key="invalid"
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="text-xs text-amber-400 font-medium"
-                    >
-                      {username.length < 3
-                        ? "Must be at least 3 characters"
-                        : "Only lowercase letters, numbers, and underscores"}
-                    </motion.p>
-                  )}
+                  {usernameStatus === USERNAME_STATUS.INVALID &&
+                    username.length > 0 && (
+                      <motion.p
+                        key="invalid"
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-xs text-amber-400 font-medium"
+                      >
+                        {username.length < 3
+                          ? "Must be at least 3 characters"
+                          : "Only lowercase letters, numbers, and underscores"}
+                      </motion.p>
+                    )}
                 </AnimatePresence>
               </motion.div>
 

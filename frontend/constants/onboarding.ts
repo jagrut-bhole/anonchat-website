@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 export const USERNAME_STATUS = {
   IDLE: "idle",
   CHECKING: "checking",

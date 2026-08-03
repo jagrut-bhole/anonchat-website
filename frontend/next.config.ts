@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   images: {
     dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: "https",

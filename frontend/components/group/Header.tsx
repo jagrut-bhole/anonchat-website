@@ -16,6 +16,7 @@ import { useState } from "react";
 import Image from "next/image";
 import mask from "@/public/images/mask.png";
 import { RANDOM_CHAT_STATUS, type RandomChatStatus } from "@/constants/header";
+import { authClient } from "@/lib/auth-client";
 
 export default function Header() {
   const router = useRouter();
@@ -24,15 +25,13 @@ export default function Header() {
   );
 
   const handleLogout = async () => {
-    // Clear all cookies
-    document.cookie.split(";").forEach((cookie) => {
-      const name = cookie.split("=")[0].trim();
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    });
-
-    // Sign out and redirect to home
-    // await signOut({ redirect: false });
-    router.push("/");
+    try {
+      await authClient.signOut();
+      
+    } finally {
+      router.push("/");
+      router.refresh();
+    }
   };
 
   return (
