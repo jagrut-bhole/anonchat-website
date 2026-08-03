@@ -9,16 +9,16 @@ datasource db {
 
 model User {
   id              String   @id @default(uuid())
-  username        String  @unique
+  name            String?
+  username        String?  @unique
   email           String   @unique
   emailVerified   Boolean  @default(false)
 
   // Avatar fields
-  avatarStyle     AvatarStyle
-  avatarSeed      String
-  avatarBackgroundColor String
+  avatarStyle     String?
+  avatarSeed      String?
+  avatarBackgroundColor String?
   avatarVersion         String @default("10.x")
-
 
   // Account security fields
   failedLoginAttempts Int       @default(0)
@@ -29,7 +29,6 @@ model User {
   latitude     Float?
   longitude    Float?
   lastLocation DateTime?
-  isOnline     Boolean   @default(false)
   location     String? // Text location based on geocoding
   selectedDistance Int @default(25)
 
@@ -189,7 +188,7 @@ model AvatarHistory {
 
   userId    String
 
-  style              AvatarStyle
+  style              String
   seed               String
   backgroundColor    String
   version            String
@@ -199,12 +198,4 @@ model AvatarHistory {
   createdAt DateTime @default(now())
 
   @@index([userId])
-}
-
-enum AvatarStyle {
-  TOON_HEAD
-  NOTIONISTS_NEUTRAL
-  PERSONAS
-  ADVENTURER_NEUTRAL
-  THUMBS
 }

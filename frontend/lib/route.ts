@@ -9,11 +9,15 @@ export const PAGE_ROUTES = {
   },
   ONBOARDING: "/onboarding",
   DASHBOARD: "/dashboard",
+  PROFILE: "/profile",
+  LIVE_CHAT: "/live-chat",
 } as const;
 
 export const API_ROUTES = {
   AUTH: "/api/v1/auth",
   USERS: "/api/v1/users",
+  ONBOARDING: "/api/v1/onboarding",
+  CHECK_USERNAME: "/api/v1/checkusername",
 } as const;
 
 export function getBackendBaseUrl() {
@@ -32,12 +36,20 @@ export function getUsersApiUrl(path = "") {
   return `${getBackendBaseUrl()}${API_ROUTES.USERS}${path}`;
 }
 
+export function getOnboardingApiUrl(path = "") {
+  return `${getBackendBaseUrl()}${API_ROUTES.ONBOARDING}${path}`;
+}
+
+export function getCheckUsernameApiUrl(path = "") {
+  return `${getBackendBaseUrl()}${API_ROUTES.CHECK_USERNAME}${path}`;
+}
+
 export function getPostAuthRoute(user?: {
   emailVerified?: boolean;
   username?: string | null;
-  image?: string | null;
+  onboardingCompleted?: boolean;
 }) {
   if (!user?.emailVerified) return PAGE_ROUTES.AUTH.VERIFY_EMAIL;
-  if (!user.username || !user.image) return PAGE_ROUTES.ONBOARDING;
+  if (!user.onboardingCompleted) return PAGE_ROUTES.ONBOARDING;
   return PAGE_ROUTES.DASHBOARD;
 }

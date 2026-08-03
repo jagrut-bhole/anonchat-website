@@ -12,8 +12,6 @@ export async function checkUsername(
 
     const validationResult = usernameValidation.safeParse(body);
 
-    console.log("ValidationResult [username check]:", validationResult);
-
     if (!validationResult.success) {
       return responseHandler.sendError(
         reply,
@@ -23,7 +21,8 @@ export async function checkUsername(
       );
     }
 
-    const username = validationResult.data;
+    // Always convert to lowercase for case-insensitive comparison
+    const username = validationResult.data.toLowerCase();
 
     const user = await prisma.user.findFirst({
       where: {

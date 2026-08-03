@@ -1,7 +1,5 @@
 "use client";
 
-import { redirect } from "next/navigation";
-import { PAGE_ROUTES } from "@/lib/route";
 import { AuroraBackground } from "@/components/LandingPage/auroraBg";
 
 export default function Home() {

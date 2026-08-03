@@ -10,6 +10,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { userRoutes } from "./routes/v1/user";
 import { checkUsernameRoute } from "./routes/v1/check";
 import { groupRoutes } from "./routes/v1/group";
+import { onboardingRoute } from "./routes/v1/onboarding";
 
 const server = Fastify({
   logger: {
@@ -49,6 +50,10 @@ server.register(userRoutes, {
 server.register(groupRoutes, {
   prefix: "/api/v1/groups",
 })
+
+server.register(onboardingRoute, {
+  prefix: "/api/v1/onboarding",
+});
 
 server.get("/ping", async (request, reply) => {
   return "pong\n";

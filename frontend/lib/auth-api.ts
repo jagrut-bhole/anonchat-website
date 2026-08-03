@@ -1,4 +1,4 @@
-import { getAuthApiUrl, getUsersApiUrl } from "@/lib/route";
+import { getAuthApiUrl, getUsersApiUrl, getOnboardingApiUrl, getCheckUsernameApiUrl } from "@/lib/route";
 
 type ApiResult<T> = {
   data: T | null;
@@ -29,11 +29,19 @@ async function request<T>(url: string, init?: RequestInit): Promise<ApiResult<T>
       return { data: null, error: await readError(response) };
     }
 
-    return { data: (await response.json()) as T, error: null };
+    const json = await response.json();
+    const payload =
+      json && typeof json === "object" && "success" in json && "data" in json && json.data !== null
+        ? json.data
+        : json;
+
+    return { data: payload as T, error: null };
   } catch {
     return { data: null, error: "Unable to reach the server" };
   }
 }
+
+// ─── Auth User Type ─────────────────────────────────────────
 
 export type AuthUser = {
   id: string;
@@ -42,7 +50,14 @@ export type AuthUser = {
   emailVerified: boolean;
   image?: string | null;
   username?: string | null;
+  avatarStyle?: string | null;
+  avatarSeed?: string | null;
+  avatarBackgroundColor?: string | null;
+  avatarVersion?: string | null;
+  onboardingCompleted?: boolean;
 };
+
+// ─── Auth API ───────────────────────────────────────────────
 
 export async function sendEmailVerificationOtp(email: string) {
   return request<{ success: boolean }>(getAuthApiUrl("/email-otp/send-verification-otp"), {
@@ -90,5 +105,108 @@ export async function completeOnboarding(input: { username: string; image: strin
   return request<{ success: boolean; user: AuthUser }>(getUsersApiUrl("/onboarding"), {
     method: "POST",
     body: JSON.stringify(input),
+  });
+}
+
+// ─── Onboarding API ─────────────────────────────────────────
+
+export type OnboardingStatus = {
+  onboardingCompleted: boolean;
+  username: string | null;
+  avatarStyle: string | null;
+  avatarSeed: string | null;
+  avatarBackgroundColor: string | null;
+};
+
+export async function checkOnboardingStatus() {
+  return request<OnboardingStatus>(getOnboardingApiUrl("/check"));
+}
+
+export type AvatarOption = {
+  seed: string;
+  url: string;
+};
+
+export type GeneratedAvatars = {
+  style: string;
+  avatars: AvatarOption[];
+};
+
+export async function generateAvatarSeeds(style: string) {
+  return request<GeneratedAvatars>(getOnboardingApiUrl("/generate-seeds"), {
+    method: "POST",
+    body: JSON.stringify({ style }),
+  });
+}
+
+export type OnboardingCompleteInput = {
+  username: string;
+  avatarStyle: string;
+  avatarSeed: string;
+  avatarBackgroundColor: string;
+  selectedDistance?: number;
+  latitude?: number;
+  longitude?: number;
+};
+
+export async function completeOnboardingFull(input: OnboardingCompleteInput) {
+  return request<{ user: AuthUser; onboardingCompleted: boolean }>(
+    getOnboardingApiUrl("/complete"),
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    }
+  );
+}
+
+// ─── Username Check ─────────────────────────────────────────
+
+export async function checkUsernameAvailability(username: string) {
+  return request<{ success: boolean }>(getCheckUsernameApiUrl("/checkusername"), {
+    method: "POST",
+    body: JSON.stringify(username),
+  });
+}
+
+// ─── Profile API ────────────────────────────────────────────
+
+export type UserProfile = {
+  id: string;
+  username: string | null;
+  email: string;
+  emailVerified: boolean;
+  avatarStyle: string | null;
+  avatarSeed: string | null;
+  avatarBackgroundColor: string | null;
+  avatarVersion: string | null;
+  location: string | null;
+  lastLocation: string | null;
+  selectedDistance: number;
+  createdAt: string;
+  accounts: { onboardingCompleted: boolean }[];
+};
+
+export async function getUserProfile() {
+  return request<UserProfile>(getUsersApiUrl("/profile"));
+}
+
+// ─── Session API ────────────────────────────────────────────
+
+export type SessionInfo = {
+  id: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+};
+
+export async function getActiveSessions() {
+  return request<{ sessions: SessionInfo[] }>(getUsersApiUrl("/sessions"));
+}
+
+export async function revokeSession(sessionId: string) {
+  return request<{ success: boolean }>(getUsersApiUrl(`/sessions/${sessionId}`), {
+    method: "DELETE",
   });
 }

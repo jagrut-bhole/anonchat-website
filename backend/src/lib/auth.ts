@@ -23,7 +23,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    autoSignIn: false,
+    autoSignIn: true,
     requireEmailVerification: true,
     revokeSessionsOnPasswordReset: true,
   },
@@ -48,8 +48,16 @@ export const auth = betterAuth({
       sendVerificationOnSignUp: true,
       overrideDefaultEmailVerification: true,
       async sendVerificationOTP({ email, otp, type }) {
-        const template = getAuthEmailTemplate(type, otp);
-        await sendEmail({ to: email, ...template });
+        console.log("\n==========================================");
+        console.log(`🔑 [DEV OTP CODE] ${email} (${type}): ${otp}`);
+        console.log("==========================================\n");
+
+        try {
+          const template = getAuthEmailTemplate(type, otp);
+          await sendEmail({ to: email, ...template });
+        } catch (error) {
+          console.warn("[Mailer] Could not send email, but OTP is logged above in console.");
+        }
       },
     }),
   ],

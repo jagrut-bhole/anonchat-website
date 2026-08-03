@@ -5,6 +5,7 @@ import {
   getUserProfile,
   getOtherUserProfile,
 } from "@/controllers/user.controller";
+import { getActiveSessions, revokeSession } from "@/controllers/session.controller";
 import { authenticate } from "@/middlewares/auth.middleware";
 
 export async function userRoutes(app: FastifyInstance) {
@@ -42,5 +43,26 @@ export async function userRoutes(app: FastifyInstance) {
       preHandler: authenticate,
     },
     getOtherUserProfile,
+  );
+
+  // Session management routes
+  app.get(
+    "/sessions",
+    {
+      preHandler: authenticate,
+    },
+    getActiveSessions,
+  );
+
+  app.delete<{
+    Params: {
+      sessionId: string;
+    };
+  }>(
+    "/sessions/:sessionId",
+    {
+      preHandler: authenticate,
+    },
+    revokeSession,
   );
 }
