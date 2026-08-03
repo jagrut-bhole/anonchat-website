@@ -5,18 +5,14 @@ import { otherUser } from "@/types/user.type";
 
 function publicUser(user: {
   id: string;
-  name: string;
   email: string;
   emailVerified: boolean;
-  image: string | null;
   username: string | null;
 }) {
   return {
     id: user.id,
-    name: user.name,
     email: user.email,
     emailVerified: user.emailVerified,
-    image: user.image,
     username: user.username,
   };
 }
@@ -32,10 +28,8 @@ export async function getMe(request: FastifyRequest, reply: FastifyReply) {
     where: { id: userId },
     select: {
       id: true,
-      name: true,
       email: true,
       emailVerified: true,
-      image: true,
       username: true,
     },
   });
@@ -102,14 +96,11 @@ export async function completeOnboarding(
     where: { id: userId },
     data: {
       username,
-      image,
     },
     select: {
       id: true,
-      name: true,
       email: true,
       emailVerified: true,
-      image: true,
       username: true,
     },
   });
@@ -138,11 +129,20 @@ export async function getUserProfile(
       username: true,
       email: true,
       emailVerified: true,
-      image: true,
+      avatarStyle: true,
+      avatarSeed: true,
+      avatarBackgroundColor: true,
+      avatarVersion: true,
       location: true,
       lastLocation: true,
       selectedDistance: true,
       createdAt: true,
+      accounts: {
+        select: {
+          onboardingCompleted: true,
+        },
+        take: 1,
+      },
     },
   });
 
@@ -206,7 +206,6 @@ export async function getOtherUserProfile(
       select: {
         id: true,
         username: true,
-        image: true,
         createdAt: true,
       },
     });

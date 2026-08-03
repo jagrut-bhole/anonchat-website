@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sendEmailVerificationOtp, verifyEmailOtp } from "@/lib/auth-api";
-import { getPostAuthRoute, PAGE_ROUTES } from "@/lib/route";
+import { PAGE_ROUTES } from "@/lib/route";
 
 export default function VerifyEmailClient() {
   const router = useRouter();
@@ -33,7 +33,8 @@ export default function VerifyEmailClient() {
       }
 
       toast.success("Email verified");
-      router.push(getPostAuthRoute(result.data?.user));
+      // After email verification, user needs to complete onboarding
+      router.push(PAGE_ROUTES.ONBOARDING);
       router.refresh();
     } finally {
       setLoading(false);

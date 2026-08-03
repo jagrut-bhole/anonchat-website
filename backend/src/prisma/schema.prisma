@@ -9,10 +9,16 @@ datasource db {
 
 model User {
   id              String   @id @default(uuid())
-  username        String  @unique
+  name            String?
+  username        String?  @unique
   email           String   @unique
   emailVerified   Boolean  @default(false)
-  image           String?
+
+  // Avatar fields
+  avatarStyle     String?
+  avatarSeed      String?
+  avatarBackgroundColor String?
+  avatarVersion         String @default("10.x")
 
   // Account security fields
   failedLoginAttempts Int       @default(0)
@@ -23,12 +29,14 @@ model User {
   latitude     Float?
   longitude    Float?
   lastLocation DateTime?
-  isOnline     Boolean   @default(false)
   location     String? // Text location based on geocoding
   selectedDistance Int @default(25)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Avatar history
+  avatarHistory AvatarHistory[]
 
   groupMemberships    GroupMember[]
   groupMessages       GroupMessage[]
@@ -173,4 +181,21 @@ model Session {
 
   @@index([userId])
   @@map("session")
+}
+
+model AvatarHistory {
+  id        String   @id @default(cuid())
+
+  userId    String
+
+  style              String
+  seed               String
+  backgroundColor    String
+  version            String
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

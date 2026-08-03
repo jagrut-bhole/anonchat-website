@@ -8,6 +8,16 @@ type SessionResponse = {
     username?: string | null;
     image?: string | null;
   };
+  session?: {
+    userId?: string;
+  };
+};
+
+type OnboardingCheckResponse = {
+  success: boolean;
+  data: {
+    onboardingCompleted: boolean;
+  };
 };
 
 const authRoutes = [
@@ -18,7 +28,7 @@ const authRoutes = [
   PAGE_ROUTES.AUTH.VERIFY_EMAIL,
 ];
 
-const protectedRoutes = [PAGE_ROUTES.DASHBOARD, PAGE_ROUTES.ONBOARDING];
+const protectedRoutes = [PAGE_ROUTES.DASHBOARD, PAGE_ROUTES.ONBOARDING, PAGE_ROUTES.PROFILE];
 
 async function getSession(req: NextRequest) {
   try {
@@ -33,6 +43,29 @@ async function getSession(req: NextRequest) {
     return (await response.json()) as SessionResponse | null;
   } catch {
     return null;
+  }
+}
+
+async function getOnboardingStatus(req: NextRequest): Promise<boolean> {
+  try {
+    const baseUrl = (
+      process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
+      process.env.BETTER_AUTH_URL ||
+      "http://localhost:6969"
+    ).replace(/\/$/, "");
+
+    const response = await fetch(`${baseUrl}/api/v1/onboarding/check`, {
+      headers: {
+        cookie: req.headers.get("cookie") || "",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) return false;
+    const json = (await response.json()) as OnboardingCheckResponse;
+    return json?.data?.onboardingCompleted ?? false;
+  } catch {
+    return false;
   }
 }
 
@@ -51,14 +84,27 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL(PAGE_ROUTES.AUTH.SIGN_IN, req.url));
   }
 
-  if (session?.user && (isAuthRoute || pathname === PAGE_ROUTES.HOME)) {
-    return NextResponse.redirect(new URL(getPostAuthRoute(session.user), req.url));
-  }
+  if (session?.user) {
+    const onboardingCompleted = await getOnboardingStatus(req);
 
-  if (session?.user && isProtectedRoute) {
-    const expectedRoute = getPostAuthRoute(session.user);
-    if (expectedRoute !== pathname) {
-      return NextResponse.redirect(new URL(expectedRoute, req.url));
+    const userWithOnboarding = {
+      ...session.user,
+      onboardingCompleted,
+    };
+
+    if (isAuthRoute || pathname === PAGE_ROUTES.HOME) {
+      return NextResponse.redirect(new URL(getPostAuthRoute(userWithOnboarding), req.url));
+    }
+
+    if (isProtectedRoute) {
+      const expectedRoute = getPostAuthRoute(userWithOnboarding);
+      if (expectedRoute !== pathname) {
+        // Allow profile access if onboarding is completed
+        if (pathname === PAGE_ROUTES.PROFILE && onboardingCompleted) {
+          return NextResponse.next();
+        }
+        return NextResponse.redirect(new URL(expectedRoute, req.url));
+      }
     }
   }
 
@@ -75,5 +121,6 @@ export const config = {
     "/auth/verify-email",
     "/onboarding/:path*",
     "/dashboard/:path*",
+    "/profile/:path*",
   ],
 };

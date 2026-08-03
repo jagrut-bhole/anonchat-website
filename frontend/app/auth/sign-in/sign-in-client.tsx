@@ -7,7 +7,7 @@ import { Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import AuthShell from "../_components/auth-shell";
 import { authClient } from "@/lib/auth-client";
-import { getMe, sendEmailVerificationOtp } from "@/lib/auth-api";
+import { getMe, sendEmailVerificationOtp, checkOnboardingStatus } from "@/lib/auth-api";
 import { getPostAuthRoute, PAGE_ROUTES } from "@/lib/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,9 +46,16 @@ export default function SignInClient() {
         return;
       }
 
-      const profile = await getMe();
+      const [profile, onboardingResult] = await Promise.all([
+        getMe(),
+        checkOnboardingStatus(),
+      ]);
       toast.success("Signed in successfully");
-      router.push(getPostAuthRoute(profile.data?.user));
+      const userWithOnboarding = {
+        ...profile.data?.user,
+        onboardingCompleted: onboardingResult.data?.onboardingCompleted ?? false,
+      };
+      router.push(getPostAuthRoute(userWithOnboarding));
       router.refresh();
     } finally {
       setLoading(false);
