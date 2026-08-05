@@ -17,10 +17,7 @@ export async function getGroupMembership(
   groupId: string,
 ): Promise<GroupMembership | null> {
   try {
-    const user = typeof userId === "string" ? userId : "";
-    if (!user) return null;
-    const group = typeof groupId === "string" ? groupId : "";
-    if (!group) return null;
+    if (!userId || !groupId) return null;
 
     const key = cacheKeys.groupMembership(userId, groupId);
 

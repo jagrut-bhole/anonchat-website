@@ -35,6 +35,8 @@ export async function getAuthenticatedUser(
       return null;
     }
 
+    request.session = session.session;
+
     const userId = session.user.id;
     const key = cacheKeys.userAuth(userId);
 

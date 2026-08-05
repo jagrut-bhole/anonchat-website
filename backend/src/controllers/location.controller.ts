@@ -100,7 +100,6 @@ export async function locationUpdate(
       latitude,
       longitude,
       selectedDistance: user.selectedDistance ?? 25,
-      location: formattedLocation,
     });
 
     // Invalidate auth cache so onboarding status updates

@@ -28,4 +28,17 @@ export class responseHandler {
       data: null
     });
   }
+
+  static sendValidationError(
+    reply: FastifyReply,
+    error: { format: () => unknown },
+    message = "Validation error"
+  ) {
+    return reply.status(400).send({
+      success: false,
+      message,
+      error: error.format(),
+      data: null,
+    });
+  }
 }

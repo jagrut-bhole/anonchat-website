@@ -28,12 +28,10 @@ export async function createGroup(
     const validationResult = createGroupSchema.safeParse(body);
 
     if (!validationResult.success) {
-      const formattedResults = validationResult.error.format();
-      return responseHandler.sendError(
+      return responseHandler.sendValidationError(
         reply,
-        400,
+        validationResult.error,
         "Validation error",
-        formattedResults,
       );
     }
 
@@ -97,11 +95,10 @@ export async function getGroupMembers(
     const validation = groupLinkSchema.safeParse(body);
 
     if (!validation.success) {
-      return responseHandler.sendError(
+      return responseHandler.sendValidationError(
         reply,
-        400,
-        "Invalid request body",
         validation.error,
+        "Invalid request body",
       );
     }
 
@@ -333,11 +330,10 @@ export async function joiningGroup(
     const validation = groupLinkSchema.safeParse(body);
 
     if (!validation.success) {
-      return responseHandler.sendError(
+      return responseHandler.sendValidationError(
         reply,
-        400,
-        "Invalid request body",
         validation.error,
+        "Invalid request body",
       );
     }
 
@@ -421,11 +417,10 @@ export async function leaveGroup(
     const validation = groupLinkSchema.safeParse(body);
 
     if (!validation.success) {
-      return responseHandler.sendError(
+      return responseHandler.sendValidationError(
         reply,
-        400,
-        "Invalid request body",
         validation.error,
+        "Invalid request body",
       );
     }
 
@@ -485,22 +480,20 @@ export async function groupChat(
     const validation = groupLinkSchema.safeParse(request.params);
 
     if (!validation.success) {
-      return responseHandler.sendError(
+      return responseHandler.sendValidationError(
         reply,
-        400,
-        "Invalid group id",
         validation.error,
+        "Invalid group id",
       );
     }
 
     const queryValidation = groupMessagesQuerySchema.safeParse(request.query);
 
     if (!queryValidation.success) {
-      return responseHandler.sendError(
+      return responseHandler.sendValidationError(
         reply,
-        400,
-        "Invalid query parameters",
         queryValidation.error,
+        "Invalid query parameters",
       );
     }
 
@@ -561,20 +554,26 @@ export async function groupChat(
     const lastMessage = messages.at(-1);
 
     const formattedMessages = messages
-      .map((message) => ({
+    .map((message) => ({
         id: message.id,
         groupId: message.groupId,
         userId: message.user.id,
         username: message.user.username,
         content: message.content,
+        mediaUrl: message.mediaUrl,
+        mediaType: message.mediaType,
+        avatarStyle: message.user.avatarStyle,
+        avatarSeed: message.user.avatarSeed,
+        avatarBackgroundColor: message.user.avatarBackgroundColor,
+        avatarVersion: message.user.avatarVersion,
         createdAt: message.createdAt.toISOString(),
       }))
       .reverse();
 
     return responseHandler.sendSuccess(reply, 200, "Messages Fetched", {
       messages: formattedMessages,
-      nextCursor:
-        messages.length === limit && lastMessage ? lastMessage.id : null,
+      hasMore,
+      nextCursor: hasMore && lastMessage ? lastMessage.id : null,
     });
   } catch (error: unknown) {
     console.error(error);
