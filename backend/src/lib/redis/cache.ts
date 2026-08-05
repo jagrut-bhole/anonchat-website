@@ -1,19 +1,30 @@
 import { redis } from "./redis";
 
 export const cacheKeys = {
-  // user data
-  user: (userId: string) => `user:${userId}`,
-  userStatus: (userId: string) => `userStatus:${userId}`,
+  // user cache keys
+  userAuth: (userId: string) => `user:auth:${userId}`,
+  userLocation: (userId: string) => `user:location:${userId}`,
+  userProfile: (userId: string) => `user:profile:${userId}`,
 
-  // Group data
-  group: (groupId: string) => `group:${groupId}`,
-  groupMembers: (groupId: string) => `group:members:${groupId}`,
-
-  // OTP
-  verificationCode: (purpose: string, identifier: string) => `otp:${purpose}:${identifier}`,
+  //presence
+  presence: (userId: string) => `presence:${userId}`,
 
   // matching queue
   matchingQueue: "matching:queue",
+
+  // ── Group Realtime & Membership ──
+  group: (groupId: string) => `group:${groupId}`,
+  groupMembers: (groupId: string) => `group:${groupId}:members`,
+  groupTyping: (groupId: string) => `group:${groupId}:typing`,
+  groupOnline: (groupId: string) => `group:${groupId}:online`,
+
+  // Group User membership
+  groupMembership: (userId: string, groupId: string) =>
+    `group:membership:${userId}:${groupId}`,
+
+  // OTP
+  verificationCode: (purpose: string, identifier: string) =>
+    `otp:${purpose}:${identifier}`,
 
   // ratelimiting
   rateLimit: (identifier: string, action: string) =>
@@ -21,10 +32,14 @@ export const cacheKeys = {
 };
 
 export const CacheTTL = {
-  user: 60 * 10, // 10 minutes
-  userStatus: 60 * 5, // 5 minutes
-  group: 60 * 10, // 10 minutes
-  groupMembers: 60 * 5, // 5 minutes
+  userAuth: 60 * 15, // 15 minutes
+  userLocation: 60 * 10, // 10 minutes
+  userProfile: 60 * 15, // 15 minutes
+  presence: 30, // 30 seconds
+  group: 60 * 15, // 15 minutes
+  groupMembers: 60 * 30, // 30 minutes
+  groupMembership: 60 * 30, // 30 minutes
+  typing: 5, // 5 seconds
   otp: 60 * 10, // 10 minutes
 };
 
@@ -64,7 +79,7 @@ export async function getCachedData<T>(key: string): Promise<T | null> {
 export async function setCachedData<T>(
   key: string,
   data: T,
-  ttl: number = CacheTTL.user,
+  ttl: number = CacheTTL.userAuth,
 ): Promise<void> {
   if (isRedisDisabled()) return;
 

@@ -1,19 +1,54 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
-import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/helper/authHelper";
+import { getUserLocation } from "@/helper/locationHelper";
+import { responseHandler } from "@/utils/apiResponse";
 
-export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
-  const data = await auth.api.getSession({
-    headers: fromNodeHeaders(request.headers),
-  });
-
-  if (!data) {
-    return reply.status(401).send({
-      success: false,
-      message: "Unauthorized",
-    });
+/**
+ * Fastify preHandler middleware for user authentication.
+ * Uses Redis caching under key user:auth:${userId} to prevent repeated DB lookups.
+ */
+export async function authenticate(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const authUser = await getAuthenticatedUser(request, reply);
+  if (!authUser) {
+    // getAuthenticatedUser handles sending the error response via reply
+    return;
   }
 
-  request.session = data.session;
-  request.user = data.user;
+  request.authUser = authUser;
+  
+  request.user = {
+    id: authUser.id,
+    email: authUser.email,
+    emailVerified: authUser.emailVerified,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as any;
+}
+
+/**
+ * Fastify preHandler middleware for requiring user location.
+ * Fetches location using Redis caching under key user:location:${userId}.
+ */
+export async function requireUserLocation(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const userId = request.authUser?.id ?? request.user?.id;
+  if (!userId) {
+    return responseHandler.sendError(reply, 401, "Unauthorized");
+  }
+
+  const location = await getUserLocation(userId);
+  if (!location) {
+    return responseHandler.sendError(
+      reply,
+      400,
+      "Location required. Please update your location first.",
+    );
+  }
+
+  request.userLocation = location;
 }

@@ -114,7 +114,7 @@ export async function getUserProfile(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const userId = request.user.id;
+  const userId = request.user?.id;
 
   if (!userId) {
     return responseHandler.sendError(reply, 401, "Unauthorized");
@@ -178,7 +178,7 @@ export async function getOtherUserProfile(
   reply: FastifyReply,
 ) {
   try {
-    const currentUserId = request.user.id;
+    const currentUserId = request.user?.id;
 
     if (!currentUserId) {
       return responseHandler.sendError(reply, 401, "Unauthorized");
