@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { geoLocation, formatLocation } from "@/lib/getGeoLocation";
 import { locationSchema } from "@/types/location.type";
-import { cacheKeys, setCachedData } from "@/lib/redis/cache";
+import { setUserLocationCache } from "@/helper/locationHelper";
+import { invalidateAuthUserCache } from "@/helper/authHelper";
 import { responseHandler } from "@/utils/apiResponse";
 
 export async function locationUpdate(
@@ -10,7 +11,7 @@ export async function locationUpdate(
   reply: FastifyReply,
 ) {
   try {
-    const userId = request.user.id;
+    const userId = request.authUser?.id ?? request.user?.id;
 
     if (!userId) {
       return responseHandler.sendError(reply, 401, "Unauthorized");
@@ -29,7 +30,7 @@ export async function locationUpdate(
         lastLocation: true,
         latitude: true,
         longitude: true,
-        createdAt: true,
+        selectedDistance: true,
       },
     });
 
@@ -53,7 +54,7 @@ export async function locationUpdate(
 
     const { latitude, longitude } = validationResult.data;
 
-    if (user?.lastLocation) {
+    if (user.lastLocation) {
       const lastUpdateTime = new Date(user.lastLocation).getTime();
       const currentTime = new Date().getTime();
       const hoursSinceLastUpdate =
@@ -68,48 +69,48 @@ export async function locationUpdate(
           `You can only update your location once per day. Please try again in ${hoursRemaining} hour${hoursRemaining > 1 ? "s" : ""}.`,
         );
       }
-
-      let formattedLocation = "Unknown Location";
-
-      try {
-        const geoCodeResult = await geoLocation({
-          latitude,
-          longitude,
-        });
-        formattedLocation = formatLocation(geoCodeResult);
-      } catch (error: unknown) {
-        console.error("Geocoding error:", error);
-      }
-      await prisma.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          lastLocation: new Date(),
-          latitude,
-          longitude,
-          location: formattedLocation,
-        },
-      });
-
-      await setCachedData(
-        cacheKeys.user(user.id),
-        {
-          ...user,
-          lastLocation: new Date(),
-          latitude,
-          longitude,
-          location: formattedLocation,
-        },
-        60 * 10,
-      );
-
-      return responseHandler.sendSuccess(
-        reply,
-        200,
-        "Location updated successfully",
-      );
     }
+
+    let formattedLocation = "Unknown Location";
+
+    try {
+      const geoCodeResult = await geoLocation({
+        latitude,
+        longitude,
+      });
+      formattedLocation = formatLocation(geoCodeResult);
+    } catch (error: unknown) {
+      console.error("Geocoding error:", error);
+    }
+
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        lastLocation: new Date(),
+        latitude,
+        longitude,
+        location: formattedLocation,
+      },
+    });
+
+    // Update Redis location cache with new coordinates
+    await setUserLocationCache(userId, {
+      latitude,
+      longitude,
+      selectedDistance: user.selectedDistance ?? 25,
+      location: formattedLocation,
+    });
+
+    // Invalidate auth cache so onboarding status updates
+    await invalidateAuthUserCache(userId);
+
+    return responseHandler.sendSuccess(
+      reply,
+      200,
+      "Location updated successfully",
+    );
   } catch (error: unknown) {
     console.error(`Error in POST /api/auth/location: ${error}`);
     return responseHandler.sendError(

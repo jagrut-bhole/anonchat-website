@@ -1,3 +1,4 @@
+import { MESSAGES_PER_PAGE } from "@/constants/group";
 import { z } from "zod";
 
 export const createGroupSchema = z.object({
@@ -33,6 +34,12 @@ export const createGroupSchema = z.object({
   }),
 });
 
-export const getGroupMemberRequest = z.object({
+export const groupLinkSchema = z.object({
   groupId: z.string()
 });
+
+export const groupMessagesQuerySchema = z.object({
+  groupId: z.string(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(MESSAGES_PER_PAGE)
+})
