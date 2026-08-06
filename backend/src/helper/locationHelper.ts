@@ -12,6 +12,7 @@ export type UserLocation = {
   latitude: number;
   longitude: number;
   selectedDistance: number;
+  lastLocation: Date | null;
 };
 
 /**
@@ -39,6 +40,7 @@ export async function getUserLocation(
         latitude: true,
         longitude: true,
         selectedDistance: true,
+        lastLocation: true,
       },
     });
 
@@ -50,6 +52,7 @@ export async function getUserLocation(
       latitude: dbUser.latitude,
       longitude: dbUser.longitude,
       selectedDistance: dbUser.selectedDistance ?? 25,
+      lastLocation: dbUser.lastLocation ?? null,
     };
 
     // 3. Cache the location in Redis (10 mins TTL)
@@ -60,6 +63,38 @@ export async function getUserLocation(
     console.error(`[getUserLocation] Error fetching location:`, error);
     return null;
   }
+}
+
+/**
+ * Checks if the user has updated their location within the 24-hour cooldown period.
+ * Returns whether the update is recent and how many hours remain.
+ */
+export async function isLocationUpdatedRecently(
+  input: string | FastifyRequest,
+): Promise<{ isRecent: boolean; hoursRemaining: number }> {
+  const location = await getUserLocation(input);
+
+  if (!location || !location.lastLocation) {
+    return { isRecent: false, hoursRemaining: 0 };
+  }
+
+  const lastUpdateTime = new Date(location.lastLocation).getTime();
+  const currentTime = Date.now();
+  const hoursSinceLastUpdate = (currentTime - lastUpdateTime) / (1000 * 60 * 60);
+
+  if (hoursSinceLastUpdate < 24) {
+    const hoursRemaining = Math.ceil(24 - hoursSinceLastUpdate);
+    return { isRecent: true, hoursRemaining };
+  }
+
+  return { isRecent: false, hoursRemaining: 0 };
+}
+
+export async function userLastLocationUpdated(
+  input: string | FastifyRequest,
+): Promise<boolean> {
+  const { isRecent } = await isLocationUpdatedRecently(input);
+  return isRecent;
 }
 
 /**

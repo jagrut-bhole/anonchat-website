@@ -10,6 +10,6 @@ export const getUser = z.object({
   userId: z.string()
 })
 
-export const otherUser = z.object({
-  userId: z.string()
+export const otherUserSchema = z.object({
+  username: z.string().min(3).max(20)
 })

@@ -1,7 +1,7 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "@/lib/prisma";
 import { responseHandler } from "@/utils/apiResponse";
-import { otherUser } from "@/types/user.type";
+import { otherUserSchema } from "@/types/user.type";
 
 function publicUser(user: {
   id: string;
@@ -111,7 +111,11 @@ export async function completeOnboarding(
 }
 
 export async function getUserProfile(
-  request: FastifyRequest,
+  request: FastifyRequest<{
+    Params: {
+      username: string
+    }
+  }>,
   reply: FastifyReply,
 ) {
   const userId = request.user?.id;
@@ -120,9 +124,16 @@ export async function getUserProfile(
     return responseHandler.sendError(reply, 401, "Unauthorized");
   }
 
+  const username: string = request.params.username;
+
+  if (!username) {
+    return responseHandler.sendError(reply, 400, "Username is required");
+  }
+
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
+      username
     },
     select: {
       id: true,
@@ -172,7 +183,7 @@ export async function getUserProfile(
 export async function getOtherUserProfile(
   request: FastifyRequest<{
     Params: {
-      userId: string
+      username: string
     }
   }>,
   reply: FastifyReply,
@@ -186,7 +197,7 @@ export async function getOtherUserProfile(
 
     const body = request.params;
 
-    const validation = otherUser.safeParse(body);
+    const validation = otherUserSchema.safeParse(body);
 
     if (!validation.success) {
       return responseHandler.sendError(
@@ -197,20 +208,24 @@ export async function getOtherUserProfile(
       );
     }
 
-    const { userId } = validation.data;
+    const { username } = validation.data;
 
-    const user = await prisma.user.findUnique({
+    const otherUser = await prisma.user.findUnique({
       where: {
-        id: userId,
+        username: username,
       },
       select: {
         id: true,
         username: true,
         createdAt: true,
+        avatarBackgroundColor: true,
+        avatarSeed: true,
+        avatarStyle: true,
+        avatarVersion: true
       },
     });
 
-    if (!user) {
+    if (!otherUser) {
       return responseHandler.sendError(reply, 404, "User not found");
     }
 
@@ -220,14 +235,16 @@ export async function getOtherUserProfile(
           {
             groupMembers: {
               some: {
-                userId: currentUserId,
+                userId: currentUserId
               },
             },
           },
           {
             groupMembers: {
               some: {
-                userId: userId,
+                user: {
+                  username: username
+                },
               },
             },
           },
@@ -240,7 +257,7 @@ export async function getOtherUserProfile(
     });
 
     const returnedUser = {
-      ...user,
+      ...otherUser,
       commonGroups: formattedResult,
     };
 
