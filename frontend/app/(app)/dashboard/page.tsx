@@ -3,7 +3,7 @@ import DashboardClient from "./dashboard-client";
 
 export const metadata: Metadata = {
   title: "Dashboard | AnonChat",
-  description: "View your AnonChat account dashboard.",
+  description: "Anonymous encrypted chats, group rooms, and real-time connections.",
 };
 
 export default function DashboardPage() {

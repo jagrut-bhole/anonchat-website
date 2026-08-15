@@ -166,3 +166,4 @@ export async function updateUserLocation(
     return responseHandler.sendError(reply, 500, "Internal server error");
   }
 }
+

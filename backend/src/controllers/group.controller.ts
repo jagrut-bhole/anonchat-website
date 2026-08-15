@@ -167,7 +167,10 @@ export async function getGroupMembers(
   }
 }
 
-export async function findGroup(request: FastifyRequest, reply: FastifyReply) {
+export async function findGroup(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   try {
     const userId = request.authUser?.id ?? request.user?.id;
 
@@ -510,10 +513,25 @@ export async function groupChat(
       );
     }
 
+    const hidden = await prisma.messageDeletion.findMany({
+      where: {
+        userId,
+        message: {
+          groupId
+        }
+      },
+      select: {
+        messageId: true
+      }
+    })
+
     // Fetch one extra message to determine if more messages exist
     const messages = await prisma.groupMessage.findMany({
       where: {
         groupId,
+        id: {
+          notIn: hidden.map((h) => h.messageId)
+        }
       },
       ...(cursor && {
         cursor: {
@@ -580,3 +598,4 @@ export async function groupChat(
     return responseHandler.sendError(reply, 500, "Internal server error");
   }
 }
+

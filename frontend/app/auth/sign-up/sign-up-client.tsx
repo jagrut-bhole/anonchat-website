@@ -74,9 +74,9 @@ export default function SignUpClient() {
           className="[&_label]:text-zinc-200 [&_input]:border-white/10 [&_input]:bg-zinc-950 [&_input]:text-white [&_input::placeholder]:text-zinc-500 [&_p]:text-zinc-400 [&_span]:text-zinc-400"
         />
 
-        <Button type="submit" disabled={loading} className="h-10 w-full bg-white text-zinc-950 hover:bg-zinc-200">
+        <Button type="submit" disabled={loading} className="h-10 w-full bg-white text-zinc-950 hover:bg-zinc-200 gap-1.5">
           {loading ? <Loader2 className="animate-spin" /> : <UserPlus />}
-          Sign up
+          {!loading && "Sign up"}
         </Button>
       </form>
     </AuthShell>
