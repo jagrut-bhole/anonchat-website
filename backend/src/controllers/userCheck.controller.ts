@@ -2,27 +2,20 @@ import type { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "@/lib/prisma";
 import { usernameValidation } from "@/types/user.type";
 import { responseHandler } from "@/utils/apiResponse";
+import { validateData } from "@/utils/validate";
 
 export async function checkUsername(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
   try {
-    const body = request.body;
 
-    const validationResult = usernameValidation.safeParse(body);
+    const data = validateData(usernameValidation, request.body, reply);
 
-    if (!validationResult.success) {
-      return responseHandler.sendError(
-        reply,
-        400,
-        "Invalid username",
-        validationResult.error,
-      );
-    }
+    if (!data) return;
 
     // Always convert to lowercase for case-insensitive comparison
-    const username = validationResult.data.toLowerCase();
+    const username = data.toLowerCase();
 
     const user = await prisma.user.findFirst({
       where: {

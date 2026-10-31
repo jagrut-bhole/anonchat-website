@@ -11,6 +11,7 @@ import { MESSAGES_PER_PAGE } from "@/constants/group";
 import { getUserLocation } from "@/helper/locationHelper";
 import { getGroupMembership } from "@/helper/groupHelper";
 import { deleteCachedData, cacheKeys } from "@/lib/redis/cache";
+import { validateData } from "@/utils/validate";
 
 export async function createGroup(
   request: FastifyRequest,
@@ -23,20 +24,12 @@ export async function createGroup(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request?.body;
+    const data = validateData(createGroupSchema, request.body, reply);
 
-    const validationResult = createGroupSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      return responseHandler.sendValidationError(
-        reply,
-        validationResult.error,
-        "Validation error",
-      );
-    }
+    if (!data) return;
 
     const { name, description, maxMembers, expiryDate, latitude, longitude } =
-      validationResult.data;
+      data;
 
     const group = await prisma.group.create({
       data: {
@@ -90,19 +83,11 @@ export async function getGroupMembers(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request.params;
+    const data = validateData(groupLinkSchema, request.params, reply);
 
-    const validation = groupLinkSchema.safeParse(body);
+    if (!data) return;
 
-    if (!validation.success) {
-      return responseHandler.sendValidationError(
-        reply,
-        validation.error,
-        "Invalid request body",
-      );
-    }
-
-    const { groupId } = validation.data;
+    const { groupId } = data;
 
     if (!groupId) {
       return responseHandler.sendError(reply, 400, "GroupId is required");
@@ -167,10 +152,7 @@ export async function getGroupMembers(
   }
 }
 
-export async function findGroup(
-  request: FastifyRequest,
-  reply: FastifyReply,
-) {
+export async function findGroup(request: FastifyRequest, reply: FastifyReply) {
   try {
     const userId = request.authUser?.id ?? request.user?.id;
 
@@ -179,7 +161,8 @@ export async function findGroup(
     }
 
     // Retrieve user location from Redis cache (or DB on cache miss)
-    const userLocation = request.userLocation ?? (await getUserLocation(userId));
+    const userLocation =
+      request.userLocation ?? (await getUserLocation(userId));
 
     if (!userLocation) {
       return responseHandler.sendError(
@@ -328,19 +311,11 @@ export async function joiningGroup(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request.params;
+    const data = validateData(groupLinkSchema, request.params, reply);
 
-    const validation = groupLinkSchema.safeParse(body);
+    if (!data) return;
 
-    if (!validation.success) {
-      return responseHandler.sendValidationError(
-        reply,
-        validation.error,
-        "Invalid request body",
-      );
-    }
-
-    const { groupId } = validation.data;
+    const { groupId } = data;
 
     if (!groupId) {
       return responseHandler.sendError(reply, 400, "Group ID is required");
@@ -415,19 +390,11 @@ export async function leaveGroup(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request.params;
+    const data = validateData(groupLinkSchema, request.params, reply);
 
-    const validation = groupLinkSchema.safeParse(body);
+    if (!data) return;
 
-    if (!validation.success) {
-      return responseHandler.sendValidationError(
-        reply,
-        validation.error,
-        "Invalid request body",
-      );
-    }
-
-    const { groupId } = validation.data;
+    const { groupId } = data;
 
     const groupMembership = await getGroupMembership(userId, groupId);
 
@@ -480,28 +447,14 @@ export async function groupChat(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const validation = groupLinkSchema.safeParse(request.params);
+    const data1 = validateData(groupLinkSchema, request.params, reply);
+    const data2 = validateData(groupMessagesQuerySchema, request.body, reply);
 
-    if (!validation.success) {
-      return responseHandler.sendValidationError(
-        reply,
-        validation.error,
-        "Invalid group id",
-      );
-    }
+    if (!data1) return;
+    if (!data2) return;
 
-    const queryValidation = groupMessagesQuerySchema.safeParse(request.query);
-
-    if (!queryValidation.success) {
-      return responseHandler.sendValidationError(
-        reply,
-        queryValidation.error,
-        "Invalid query parameters",
-      );
-    }
-
-    const { groupId } = validation.data;
-    const { cursor, limit = MESSAGES_PER_PAGE } = queryValidation.data;
+    const { groupId } = data1;
+    const { cursor, limit = MESSAGES_PER_PAGE } = data2;
 
     const groupMembership = await getGroupMembership(userId, groupId);
 
@@ -517,21 +470,21 @@ export async function groupChat(
       where: {
         userId,
         message: {
-          groupId
-        }
+          groupId,
+        },
       },
       select: {
-        messageId: true
-      }
-    })
+        messageId: true,
+      },
+    });
 
     // Fetch one extra message to determine if more messages exist
     const messages = await prisma.groupMessage.findMany({
       where: {
         groupId,
         id: {
-          notIn: hidden.map((h) => h.messageId)
-        }
+          notIn: hidden.map((h) => h.messageId),
+        },
       },
       ...(cursor && {
         cursor: {
@@ -572,7 +525,7 @@ export async function groupChat(
     const lastMessage = messages.at(-1);
 
     const formattedMessages = messages
-    .map((message) => ({
+      .map((message) => ({
         id: message.id,
         groupId: message.groupId,
         userId: message.user.id,
@@ -598,4 +551,3 @@ export async function groupChat(
     return responseHandler.sendError(reply, 500, "Internal server error");
   }
 }
-

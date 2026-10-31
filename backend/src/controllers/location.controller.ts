@@ -5,6 +5,7 @@ import { locationSchema } from "@/types/location.type";
 import { setUserLocationCache } from "@/helper/locationHelper";
 import { invalidateAuthUserCache } from "@/helper/authHelper";
 import { responseHandler } from "@/utils/apiResponse";
+import { validateData } from "@/utils/validate";
 
 export async function locationUpdate(
   request: FastifyRequest,
@@ -38,21 +39,11 @@ export async function locationUpdate(
       return responseHandler.sendError(reply, 404, "User not Found");
     }
 
-    const body = request.body;
+    const data = validateData(locationSchema, request.body, reply);
 
-    const validationResult = locationSchema.safeParse(body);
+    if(!data) return;
 
-    if (!validationResult.success) {
-      const formattedErrors = validationResult.error.format();
-      return responseHandler.sendError(
-        reply,
-        400,
-        "Invalid location data",
-        formattedErrors,
-      );
-    }
-
-    const { latitude, longitude } = validationResult.data;
+    const { latitude, longitude } = data;
 
     if (user.lastLocation) {
       const lastUpdateTime = new Date(user.lastLocation).getTime();

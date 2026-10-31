@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { responseHandler } from "@/utils/apiResponse";
 import { generateSeedsSchema } from "@/types/avatar.type";
 import { buildAvatarUrl } from "@/constants/avatar";
+import { validateData } from "@/utils/validate";
 
 const SEEDS_COUNT = 5;
 const MAX_GENERATION_ATTEMPTS = 20;
@@ -18,13 +19,11 @@ export async function generateSeeds(
     return responseHandler.sendError(reply, 401, "Unauthorized");
   }
 
-  const parsed = generateSeedsSchema.safeParse(request.body);
+  const data = validateData(generateSeedsSchema, request.body, reply);
 
-  if (!parsed.success) {
-    return responseHandler.sendError(reply, 400, "Invalid input", parsed.error);
-  }
+  if (!data) return;
 
-  const { style } = parsed.data;
+  const { style } = data;
 
   // Get seeds already used by ANY user for this style to avoid collisions
   const usedSeeds = await prisma.user.findMany({

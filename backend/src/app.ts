@@ -55,10 +55,6 @@ server.register(onboardingRoute, {
   prefix: "/api/v1/onboarding",
 });
 
-server.get("/ping", async (request, reply) => {
-  return "pong\n";
-});
-
 server.register(checkUsernameRoute, {
   prefix: "/api/v1/checkusername",
 });

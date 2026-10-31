@@ -5,7 +5,7 @@ import {
   getJoinedGroups,
   getGroupMembers,
   joiningGroup,
-  leaveGroup
+  leaveGroup,
 } from "@/controllers/group.controller";
 import { authenticate } from "@/middlewares/auth.middleware";
 
@@ -13,60 +13,60 @@ export async function groupRoutes(app: FastifyInstance) {
   app.post(
     "/create",
     {
-      preHandler: authenticate
+      preHandler: authenticate,
     },
-    createGroup
+    createGroup,
   );
 
   app.get(
     "/find",
     {
-      preHandler: authenticate
+      preHandler: authenticate,
     },
-    findGroup
+    findGroup,
   );
 
   app.get(
     "/joinedGroups",
     {
-      preHandler: authenticate
+      preHandler: authenticate,
     },
-    getJoinedGroups
+    getJoinedGroups,
   );
 
   app.get<{
     Params: {
-      groupId: string
-    }
+      groupId: string;
+    };
   }>(
     "/members/:groupId",
     {
-      preHandler: authenticate
+      preHandler: authenticate,
     },
-    getGroupMembers
+    getGroupMembers,
   );
 
   app.post<{
     Params: {
-      groupId: string
-    }
+      groupId: string;
+    };
   }>(
     "/join/:groupId",
     {
-      preHandler: authenticate
+      preHandler: authenticate,
     },
-    joiningGroup
+    joiningGroup,
   );
 
   app.post<{
     Params: {
-      groupId: string
-    }
+      groupId: string;
+    };
   }>(
     "/leave/:groupId",
     {
-      preHandler: authenticate
+      preHandler: authenticate,
     },
-    leaveGroup
+    leaveGroup,
   );
 }

@@ -2,6 +2,7 @@ import type { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "@/lib/prisma";
 import { responseHandler } from "@/utils/apiResponse";
 import { otherUserSchema } from "@/types/user.type";
+import { validateData } from "@/utils/validate";
 
 function publicUser(user: {
   id: string;
@@ -195,20 +196,11 @@ export async function getOtherUserProfile(
       return responseHandler.sendError(reply, 401, "Unauthorized");
     }
 
-    const body = request.params;
+    const data = validateData(otherUserSchema, request.params, reply);
 
-    const validation = otherUserSchema.safeParse(body);
+    if (!data) return;
 
-    if (!validation.success) {
-      return responseHandler.sendError(
-        reply,
-        400,
-        "Invalid request body",
-        validation.error,
-      );
-    }
-
-    const { username } = validation.data;
+    const { username } = data;
 
     const otherUser = await prisma.user.findUnique({
       where: {

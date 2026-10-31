@@ -41,4 +41,4 @@ export const groupLinkSchema = z.object({
 export const groupMessagesQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(MESSAGES_PER_PAGE)
-})
+});

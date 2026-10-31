@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { FastifyRequest, FastifyReply } from "fastify";
 import {
-  setCachedData,
-  getCachedData,
-  CacheTTL,
   cacheKeys,
 } from "@/lib/redis/cache";
 import { responseHandler } from "@/utils/apiResponse";
