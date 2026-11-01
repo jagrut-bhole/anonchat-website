@@ -4,6 +4,9 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 
+// React Query
+import { Providers } from "./providers";
+
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
@@ -35,7 +38,7 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", manrope.variable, geistSans.variable, geistMono.variable, "font-sans")}
     >
       <body className="min-h-full flex flex-col bg-black">
-        {children}
+        <Providers>{children}</Providers>
         <Toaster richColors position="top-right" />
       </body>
     </html>
